@@ -16,7 +16,7 @@ def chech_name(name):
     )
 
 def main():
-    files = glob.glob(f"C:/Users/aqtor/Desktop/ledian_csv/end_of_3/user/*")
+    files = glob.glob(f"C:/Users/aqtor/Desktop/ledian_csv/end_of_3/old/user/*")
     for file in files:
         csv_file = pd.read_csv(filepath_or_buffer=file, encoding="utf-8", sep=",")
         df_csv = pd.DataFrame(csv_file)
@@ -25,15 +25,19 @@ def main():
         print(f'=== {file_name} ===')
 
         row_num = 0
+        member_ids = []
         for index, row in df_csv.iterrows():
             row_num += 1
+            member_id = str(row.loc['会員番号'])
             mail_address = str(row.loc['メールアドレス'])
             last_name = str(row.loc['姓（カナ）'])
             first_name = str(row.loc['名（カナ）'])
 
             if  check_address(mail_address) and chech_name(last_name) and chech_name(first_name):
-                print(f'{row_num + 1}行目 {last_name} {first_name} {mail_address}')
-        
+                print(f'{row_num + 1}行目 {member_id} {last_name} {first_name} {mail_address}')
+            else:
+                member_ids.append(member_id)
+
         print()
 
 if __name__ == "__main__":

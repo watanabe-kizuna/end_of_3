@@ -1,44 +1,53 @@
-import pandas as pd
 import glob
+import my_lib
 
-def check_address(mail_address):
-    return (
-        mail_address != 'nan' and
-        not '@sora-michi.com' in mail_address and
-        not '@everforth.co.jp' in mail_address and
-        not '@ledian.jp' in mail_address and
-        not 's.m.m.y.ito+' in mail_address
-    )
 
-def chech_name(name):
-    return (
-        not 'テスト' in name
-    )
+member_ids          = []
+
+old_csv_path        = 'C:/Users/aqtor/Desktop/ledian_csv/end_of_3/old'
+new_csv_path        = 'C:/Users/aqtor/Desktop/ledian_csv/end_of_3/new'
+exc_csv_path        = 'C:/Users/aqtor/Desktop/ledian_csv/end_of_3/exc'
+
+user_files          = glob.glob(f'{old_csv_path}/user/*')
+subscription_files  = glob.glob(f'{old_csv_path}/subscription/*')
+order_files         = glob.glob(f'{old_csv_path}/order/*')
+
+member_id_index     = 0
+last_name_index     = 3
+first_name_index    = 4
+mail_address_index  = 10
+
+
+def rebuild_user_csv():
+    exc_header = []
+    exc_body = []
+    for file in user_files:
+        file_name = str(file).split('\\')[1]
+        csv_file = my_lib.read_csv_file(file)
+        header = next(csv_file)
+        exc_header = header
+        body = []
+
+        for row in csv_file:
+            member_id = row[member_id_index]
+            last_name = row[last_name_index]
+            first_name = row[first_name_index]
+            mail_address = row[mail_address_index]
+
+            if my_lib.check_address(mail_address) and my_lib.chech_name(last_name) and my_lib.chech_name(first_name):
+                body.append(row)
+            else:
+                row.insert(0, file_name.replace("production_", ""))
+                exc_body.append(row)
+                member_ids.append(member_id)
+        
+        my_lib.write_csv_file(f'{new_csv_path}/user/{file_name.replace("production_", "")}', header, body)
+    
+    exc_header.insert(0, "ファイル名")
+    my_lib.write_csv_file(f'{exc_csv_path}/user/exc_users.csv', exc_header, exc_body)
 
 def main():
-    files = glob.glob(f"C:/Users/aqtor/Desktop/ledian_csv/end_of_3/old/user/*")
-    for file in files:
-        csv_file = pd.read_csv(filepath_or_buffer=file, encoding="utf-8", sep=",")
-        df_csv = pd.DataFrame(csv_file)
-        
-        file_name = str(file).split("\\")[1]
-        print(f'=== {file_name} ===')
-
-        row_num = 0
-        member_ids = []
-        for index, row in df_csv.iterrows():
-            row_num += 1
-            member_id = str(row.loc['会員番号'])
-            mail_address = str(row.loc['メールアドレス'])
-            last_name = str(row.loc['姓（カナ）'])
-            first_name = str(row.loc['名（カナ）'])
-
-            if  check_address(mail_address) and chech_name(last_name) and chech_name(first_name):
-                print(f'{row_num + 1}行目 {member_id} {last_name} {first_name} {mail_address}')
-            else:
-                member_ids.append(member_id)
-
-        print()
+    rebuild_user_csv()
 
 if __name__ == "__main__":
     main()
